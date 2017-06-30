@@ -25,14 +25,14 @@ class TitleCleaner:
                 song[0] = song[0].split(':')[2]
         if len(song[0].split('|')) > 1:
             # Case -> 'Listen/Download |'
-            song[0] = song[0].split(':')[1]
+            song[0] = song[0].split('|')[1]
         if len(song[0].split('(')) > 1:
             # Case -> '(New Audio)'
-            if song[0].split('(')[0] == '':
+            if song[0].split('(')[0] == '' or song[0].split('(')[0] == ' ':
                 song[0] = song[0].split('(')[1].split(')')[1]
             else:
                 # Case -> ' (@JChameleone) '
-                # SOMETIMES THERE ARE TWO @ !!
+                # TODO: SOMETIMES THERE ARE TWO @ !!
                 if '@' in song[0].split('(')[1]:
                     song[0] = song[0].split('(')[0] + \
                               song[0].split('(')[1].split(')')[1]

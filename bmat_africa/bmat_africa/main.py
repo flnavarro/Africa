@@ -20,10 +20,10 @@ import unicodecsv as csv
 # })
 # process.crawl(DjChokaSpider)
 # process.start()
-#
-# # Clean Titles
-# title_cleaner = TitleCleaner()
-# title_cleaner.clean()
+
+# Clean Titles
+title_cleaner = TitleCleaner()
+title_cleaner.clean()
 
 # Get Youtube Links
 yt_search = YoutubeSearch()

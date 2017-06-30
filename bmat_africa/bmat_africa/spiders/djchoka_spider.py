@@ -8,8 +8,8 @@ from operator import itemgetter
 class DjChokaSpider(scrapy.Spider):
     name = "djchoka_spider"
     page = 1
-    # page_limit = 169
-    page_limit = 2
+    page_limit = 10
+    # page_limit = 2
     song_list = []
     check_list = []
     check_file = settings.CHECK_FILE
@@ -33,14 +33,16 @@ class DjChokaSpider(scrapy.Spider):
             else:
                 self.main_page = False
 
-        for song in self.song_list:
-            url = song[2]
-            yield scrapy.Request(url=url, callback=self.get_download_link, errback=self.parse_error)
+        # for song in self.song_list:
+        #     url = song[2]
+        #     yield scrapy.Request(url=url, callback=self.get_download_link, errback=self.parse_error)
+
+        self.save_and_close_spider()
 
     def parse(self, response):
         # In first page -> Get LAST PAGE number
-        # if self.page == 1:
-        #     self.page_limit = int(response.css('span.pages::text').extract_first().split(' of ')[1])
+        if self.page == 1:
+            self.page_limit = int(response.css('span.pages::text').extract_first().split(' of ')[1])
         page_songs = response.css('li.first_news').css('h4.pp-title-blog').css('a::text').extract()
         page_dates = response.css('li.first_news').css('a.date::text').extract()
         page_links = response.css('li.first_news').css('h4.pp-title-blog').xpath('a/@href').extract()
@@ -49,7 +51,7 @@ class DjChokaSpider(scrapy.Spider):
             if page_song[0] == self.check_list[0][0] and \
                             page_song[1] == self.check_list[0][1] and \
                             page_song[2] == self.check_list[0][2]:
-                self.main_page = False
+                # self.main_page = False
                 break
             else:
                 self.song_list.append(page_song)
@@ -87,14 +89,15 @@ class DjChokaSpider(scrapy.Spider):
 
     def parse_error(self, response):
         print('PARSE ERROR!')
+        self.save_and_close_spider()
 
     def save_and_close_spider(self):
-        songs = [i[0] for i in self.song_list]
-        dates = [i[1] for i in self.song_list]
-        links = [i[2] for i in self.song_list]
-        sorted(self.download_urls, key=itemgetter(1))
-        self.download_urls = [i[0] for i in self.download_urls]
-        self.song_list = zip(songs, dates, links, self.download_urls)
+        # songs = [i[0] for i in self.song_list]
+        # dates = [i[1] for i in self.song_list]
+        # links = [i[2] for i in self.song_list]
+        # sorted(self.download_urls, key=itemgetter(1))
+        # self.download_urls = [i[0] for i in self.download_urls]
+        # self.song_list = zip(songs, dates, links, self.download_urls)
         self.check_list = self.song_list + self.check_list
         with open(self.check_file, 'w') as f:
             writer = csv.writer(f, delimiter='\t')
