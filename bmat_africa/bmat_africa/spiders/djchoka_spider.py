@@ -2,12 +2,14 @@ import scrapy
 from scrapy.exceptions import CloseSpider
 import unicodecsv as csv
 import settings
+from operator import itemgetter
 
 
 class DjChokaSpider(scrapy.Spider):
     name = "djchoka_spider"
     page = 1
-    page_limit_debug = 169
+    # page_limit = 169
+    page_limit = 2
     song_list = []
     check_list = []
     check_file = settings.CHECK_FILE
@@ -26,7 +28,7 @@ class DjChokaSpider(scrapy.Spider):
         root_url = settings.ROOT_URL
         while self.main_page:
             url = root_url + 'page/%s/' % str(self.page)
-            if self.page != self.page_limit_debug:
+            if self.page < self.page_limit + 1:
                 yield scrapy.Request(url=url, callback=self.parse, errback=self.parse_error)
             else:
                 self.main_page = False
@@ -37,6 +39,8 @@ class DjChokaSpider(scrapy.Spider):
 
     def parse(self, response):
         # In first page -> Get LAST PAGE number
+        # if self.page == 1:
+        #     self.page_limit = int(response.css('span.pages::text').extract_first().split(' of ')[1])
         page_songs = response.css('li.first_news').css('h4.pp-title-blog').css('a::text').extract()
         page_dates = response.css('li.first_news').css('a.date::text').extract()
         page_links = response.css('li.first_news').css('h4.pp-title-blog').xpath('a/@href').extract()
@@ -61,35 +65,35 @@ class DjChokaSpider(scrapy.Spider):
                 download_url = download_url[:31] + 'download' + download_url[36:]
             elif 'youtube.com' in download_url:
                 download_url = download_url[:24] + 'watch?v=' + download_url[30:]
+            elif 'audiomack' in download_url:
+                download_url = download_url[:26] + 'song' + download_url[38:]
+            elif 'hulkshare' in download_url:
+                download_url = download_url[:25] + 'dl/' + download_url[38:]
 
             if download_url is not None:
                 print('download url -> ' + download_url)
             else:
                 print('DOWNLOAD URL IS NONE')
-        else:
-            # TODO: A bit dangerous, maybe is not necessary since there is never a way to download
-            # from wasafi.
-            check_url = response.css('div.inner_post').css('a').xpath('@href').extract()[1]
-            if 'wasafi' in check_url:
-                download_url = None
-            print('DOWNLOAD URL IS NONE')
 
         if download_url is None:
             download_url = 'None'
 
-        self.download_urls.append(download_url)
+        links = [i[2] for i in self.song_list]
+        index = links.index(response.url)
+        self.download_urls.append([download_url, index])
         self.count_tracks += 1
         if self.count_tracks == len(self.song_list):
             self.save_and_close_spider()
 
     def parse_error(self, response):
-        # REVISAR ESTO
-        self.save_and_close_spider()
+        print('PARSE ERROR!')
 
     def save_and_close_spider(self):
         songs = [i[0] for i in self.song_list]
         dates = [i[1] for i in self.song_list]
         links = [i[2] for i in self.song_list]
+        sorted(self.download_urls, key=itemgetter(1))
+        self.download_urls = [i[0] for i in self.download_urls]
         self.song_list = zip(songs, dates, links, self.download_urls)
         self.check_list = self.song_list + self.check_list
         with open(self.check_file, 'w') as f:

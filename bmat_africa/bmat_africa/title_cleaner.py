@@ -14,22 +14,35 @@ class TitleCleaner:
             for row in reader:
                 self.song_list.append(row)
 
-    def clean_title(self, song):
+    @staticmethod
+    def clean_title(song):
         if len(song[0].split(':')) > 1:
+            # Case -> '#NewAUDIO:'
             if len(song[0].split(':')) == 2:
                 song[0] = song[0].split(':')[1]
+            # Case -> 'DOWNLOAD: #NewAUDIO:'
             elif len(song[0].split(':')) == 3:
                 song[0] = song[0].split(':')[2]
+        if len(song[0].split('|')) > 1:
+            # Case -> 'Listen/Download |'
+            song[0] = song[0].split(':')[1]
         if len(song[0].split('(')) > 1:
+            # Case -> '(New Audio)'
             if song[0].split('(')[0] == '':
                 song[0] = song[0].split('(')[1].split(')')[1]
             else:
+                # Case -> ' (@JChameleone) '
+                # SOMETIMES THERE ARE TWO @ !!
                 if '@' in song[0].split('(')[1]:
                     song[0] = song[0].split('(')[0] + \
                               song[0].split('(')[1].split(')')[1]
-                else:
-                    song[0] = song[0].split('(')[0]
+        if len(song[0].split(')')) > 1:
+            # Case -> '(Official Audio)'
+            if song[0].split(')')[-1] == '':
+                song[0] = song[0].split('(')[0]
+
         if len(song[0].split('[')) > 1:
+            # Case -> '[Official Audio]'
             song[0] = song[0].split('[')[0]
         return song
 
