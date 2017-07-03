@@ -20,10 +20,10 @@ class DjChokaSpider(scrapy.Spider):
     count_tracks = 0
 
     def start_requests(self):
-        with open(self.check_file, 'rb') as f:
-            reader = csv.reader(f, delimiter='\t')
-            for row in reader:
-                self.check_list.append(row)
+        # with open(self.check_file, 'rb') as f:
+        #     reader = csv.reader(f, delimiter='\t')
+        #     for row in reader:
+        #         self.check_list.append(row)
 
         root_url = settings.ROOT_URL
         while self.main_page:
@@ -98,10 +98,10 @@ class DjChokaSpider(scrapy.Spider):
         # sorted(self.download_urls, key=itemgetter(1))
         # self.download_urls = [i[0] for i in self.download_urls]
         # self.song_list = zip(songs, dates, links, self.download_urls)
-        self.check_list = self.song_list + self.check_list
-        with open(self.check_file, 'w') as f:
-            writer = csv.writer(f, delimiter='\t')
-            writer.writerows(self.check_list)
+        # self.check_list = self.song_list + self.check_list
+        # with open(self.check_file, 'w') as f:
+        #     writer = csv.writer(f, delimiter='\t')
+        #     writer.writerows(self.check_list)
         with open(self.exec_file, 'w') as f:
             writer = csv.writer(f, delimiter='\t')
             writer.writerows(self.song_list)
