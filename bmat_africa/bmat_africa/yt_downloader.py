@@ -6,10 +6,10 @@ import logging
 
 
 class MyLogger(object):
-    def __init__(self, track_info, path):
+    def __init__(self, logger, track_info, path):
         # Log
         self.track_info = track_info
-        # self.logger = logger
+        self.logger = logger
         self.temp_file_path = path
 
     def debug(self, msg):
@@ -20,7 +20,7 @@ class MyLogger(object):
 
     def error(self, msg):
         # Print error into batch log
-        # self.logger.warning('TRACK: ' + self.track_info + ' - ' + msg)
+        self.logger.warning('TRACK: ' + self.track_info + ' - ' + msg)
         print(msg)
         # Types of error
         if 'copyright' in msg:
@@ -53,7 +53,7 @@ class YoutubeDownloader(object):
             self.file_url = root[root.find('tracks'):]
             print('Done downloading, now converting... ')
 
-    def download(self, track_url, path, track_info):
+    def download(self, track_url, path, logger, track_info):
         self.tracks_path = path
 
         ydl_opts = {
@@ -63,7 +63,7 @@ class YoutubeDownloader(object):
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'logger': MyLogger(track_info, path),
+            'logger': MyLogger(logger, track_info, path),
             'progress_hooks': [self.my_hook],
             'ignoreerrors': True,
             'noplaylist': True,
@@ -86,7 +86,7 @@ class YoutubeDownloader(object):
                     self.file_url = self.error_meaning[index]  # write error into file_url
                 else:
                     self.file_url = self.error_meaning[index] + track_url  # write error into file_url + link
-                    self.create_recover_download()  # create recover download file only if it's error 2
+                    # self.create_recover_download()  # create recover download file only if it's error 2
                 os.remove(path + error + '.temp')  # remove temp error file
                 self.error_count += 1
                 break

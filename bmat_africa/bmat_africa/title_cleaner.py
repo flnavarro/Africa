@@ -5,79 +5,38 @@ import settings
 class TitleCleaner:
 
     def __init__(self):
-        self.exec_file = settings.EXEC_FILE
-        self.song_list = []
+        self.track_list = []
+        self.load_new_posts()
 
-    def load_exec_file(self):
-        with open(self.exec_file, 'rb') as f:
+    def load_new_posts(self):
+        # Load new posts data
+        with open(settings.NEW_POSTS, 'rb') as f:
             reader = csv.reader(f, delimiter='\t')
             for row in reader:
-                self.song_list.append(row)
+                self.track_list.append(row)
 
     @staticmethod
-    def clean_title(song):
-        if len(song[0].split(':')) > 1:
-            # Case -> '#NewAUDIO:'
-            if len(song[0].split(':')) == 2:
-                song[0] = song[0].split(':')[1]
-            # Case -> 'DOWNLOAD: #NewAUDIO:'
-            elif len(song[0].split(':')) == 3:
-                song[0] = song[0].split(':')[2]
-        if len(song[0].split('|')) > 1:
-            # Case -> 'Listen/Download |'
-            song[0] = song[0].split('|')[1]
-        if len(song[0].split('(')) > 1:
-            # Case -> '(New Audio)'
-            if song[0].split('(')[0] == '' or song[0].split('(')[0] == ' ':
-                song[0] = song[0].split('(')[1].split(')')[1]
-            else:
-                # Case -> ' (@JChameleone) '
-                # TODO: SOMETIMES THERE ARE TWO @ !!
-                if '@' in song[0].split('(')[1]:
-                    song[0] = song[0].split('(')[0] + \
-                              ' '.join(song[0].split('(')[1].split(')')[1:])
-                    if len(song[0].split('(')) > 1:
-                        if '@' in song[0].split('(')[1]:
-                            song[0] = song[0].split('(')[0] + \
-                                    ' '.join(song[0].split('(')[1].split(')')[1:])
-        if len(song[0].split(')')) > 1:
-            # Case -> '(Official Audio)'
-            if song[0].split(')')[-1] == '':
-                song[0] = song[0].split('(')[0]
-
-        if len(song[0].split('[')) > 1:
-            # Case -> '[Official Audio]'
-            song[0] = song[0].split('[')[0]
-
-        if 'Wimbo mpya' in song[0]:
-            new_title = ''
-            for word in song[0].split(' '):
-                if word.isupper():
-                    new_title += word + ' '
-            song[0] = new_title
-
-        return song
-
-    @staticmethod
-    def clean_title_2(title):
+    def clean_title(title):
         title_split = title.split(' ')
-        song_artist = []
-        song_title = []
+        track_artist = []
+        track_title = []
         get_artist = True
         open_brackets = False
         if 'Wimbo mpya' in title:
+            # If 'wimbo mpya' post - Title and artist is upper case
             prev_upper = False
             for word in title_split:
                 if word.isupper():
                     if get_artist:
-                        song_artist.append(word)
+                        track_artist.append(word)
                         prev_upper = True
                     else:
-                        song_title.append(word)
+                        track_title.append(word)
                 else:
                     if prev_upper:
                         get_artist = False
         else:
+            # Other posts - discard info words to get only artist and title
             for word in title_split:
                 if get_artist:
                     if len(word) > 1:
@@ -102,14 +61,14 @@ class TitleCleaner:
                             if word != u'Feat' and word != u'feat' and word != u'Feat.' and word != u'feat.' \
                                     and word != u'Ft' and word != u'ft' and word != u'Ft.' and word != u'ft.' \
                                     and word != u'FT' and word != u'FT.' and word != u'FEAT' and word != u'FEAT.':
-                                song_artist.append(word)
+                                track_artist.append(word)
                             else:
-                                song_artist.append('FEAT.')
+                                track_artist.append('FEAT.')
                     else:
                         if word != u'&' and word != u'|' and word != u'+' and word.isalpha() is False:
                             get_artist = False
                         if word.isalpha():
-                            song_artist.append(word)
+                            track_artist.append(word)
                 else:
                     if '(' in word:
                         open_brackets = True
@@ -117,28 +76,29 @@ class TitleCleaner:
                         open_brackets = False
                     else:
                         if open_brackets is False:
-                            song_title.append(word)
+                            track_title.append(word)
 
-        song_artist = ' '.join(song_artist)
-        song_title = ' '.join(song_title)
-        return song_artist, song_title
+        track_artist = ' '.join(track_artist)
+        track_title = ' '.join(track_title)
+        return track_artist, track_title
 
     def save_titles(self):
-        with open('exec_file.csv', 'w') as f:
+        # Save a download list with clean titles to use later
+        with open(settings.DL_LIST, 'w') as f:
             writer = csv.writer(f, delimiter='\t')
-            writer.writerows(self.song_list)
+            writer.writerows(self.track_list)
 
     def clean(self):
-        self.load_exec_file()
-        song_titles = [i[0] for i in self.song_list]
-        song_dates = [i[1] for i in self.song_list]
-        song_posts = [i[2] for i in self.song_list]
+        print('Obtaining track artists and titles...')
+        post_titles = [i[0] for i in self.track_list]
+        post_dates = [i[1] for i in self.track_list]
+        post_links = [i[2] for i in self.track_list]
         track_artists = []
         track_titles = []
-        for song in song_titles:
-            # song = self.clean_title(song)
-            song_artist, song_title = self.clean_title_2(song)
-            track_artists.append(song_artist)
-            track_titles.append(song_title)
-        self.song_list = zip(track_artists, track_titles, song_dates, song_posts)
+        # Clean post titles and get track artist and title
+        for post_title in post_titles:
+            track_artist, track_title = self.clean_title(post_title)
+            track_artists.append(track_artist)
+            track_titles.append(track_title)
+        self.track_list = zip(track_artists, track_titles, post_dates, post_links)
         self.save_titles()
