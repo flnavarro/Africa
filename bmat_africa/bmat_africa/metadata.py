@@ -1,10 +1,10 @@
 import xlwt, xlrd
 from xlutils.copy import copy
 import os
-import discogs_client
-from difflib import SequenceMatcher
+# from difflib import SequenceMatcher
 import string
-import requests
+# import requests
+# import discogs_client
 
 
 class Track(object):
@@ -47,31 +47,31 @@ class ManageMetadata(object):
         self.row = 1
         self.sheet_to_read = None
         self.metadata = TrackMetadata()
-        # Discogs API
-        if get_from_discogs:
-            self.discogs = discogs_client.Client('YoutubeBatches/1.0', user_token="MPtcrSCmtLPRRnrOcGmjhmRGHoaVZRlsanLSLzcO")
-            self.discogs_metadata = True
-        else:
-            self.discogs_metadata = False
+        # # Discogs API
+        # if get_from_discogs:
+        #     self.discogs = discogs_client.Client('YoutubeBatches/1.0', user_token="MPtcrSCmtLPRRnrOcGmjhmRGHoaVZRlsanLSLzcO")
+        #     self.discogs_metadata = True
+        # else:
+        #     self.discogs_metadata = False
         self.generate_recover = False
 
-    @staticmethod
-    def find_name(title_in_xml, track_list):
-        sim_ratio = []
-        # Find the most similar name to the original title in the xml in album's track list
-        for track in track_list:
-            sim_ratio.append(SequenceMatcher(None, title_in_xml.lower(), track['title'].lower()).ratio())
-        return sim_ratio.index(max(sim_ratio))
-
-    @staticmethod
-    def find_upc(barcode_ids):
-        album_upc = []
-        # Find Album UPC numbers among the 'Barcode and Other Identifiers' from Discogs API
-        for barcode_id in barcode_ids:
-            n_digits = sum(c.isdigit() for c in barcode_id)
-            if n_digits == 12 or n_digits == 13:
-                album_upc.append(barcode_id)
-        return album_upc
+    # @staticmethod
+    # def find_name(title_in_xml, track_list):
+    #     sim_ratio = []
+    #     # Find the most similar name to the original title in the xml in album's track list
+    #     for track in track_list:
+    #         sim_ratio.append(SequenceMatcher(None, title_in_xml.lower(), track['title'].lower()).ratio())
+    #     return sim_ratio.index(max(sim_ratio))
+    #
+    # @staticmethod
+    # def find_upc(barcode_ids):
+    #     album_upc = []
+    #     # Find Album UPC numbers among the 'Barcode and Other Identifiers' from Discogs API
+    #     for barcode_id in barcode_ids:
+    #         n_digits = sum(c.isdigit() for c in barcode_id)
+    #         if n_digits == 12 or n_digits == 13:
+    #             album_upc.append(barcode_id)
+    #     return album_upc
 
     def initialize(self, batch_path):
         self.batch_path = batch_path
@@ -121,53 +121,53 @@ class ManageMetadata(object):
         # If it doesn't have a download error adds .mp3 to the end of url
         if 'N/A:' not in self.metadata.url:
             self.metadata.url += '.mp3'
-
-        if self.discogs_metadata:
-            try:
-                # Discogs query
-                results = self.discogs.search(artist=track.artist, track=track.title, type='release')
-            except (discogs_client.exceptions.HTTPError, requests.exceptions.ConnectionError, ValueError):
-                # Discogs error
-                print('Discogs API error. Download will continue and recover.metadata will be generated.')
-                results = None
-                self.generate_recover = True
-
-            try:
-                if results is not None and len(results) > 0:
-                    # Get metadata from Discogs API
-                    found_in_discogs = True
-                    data = results[0].data
-                    self.metadata.artist = results[0].artists[0].name.encode('utf-8')
-                    id_in_tracklist = self.find_name(track.title, data['tracklist'])
-                    self.metadata.title = data['tracklist'][id_in_tracklist]['title'].encode('utf-8')
-                    self.metadata.album = data['title'].encode('utf-8')
-                    self.metadata.album_artist = [artist['name'].encode('utf-8') for artist in data['artists']]
-                    self.metadata.album_upc = self.find_upc([barcode.encode('utf-8') for barcode in data['barcode']])
-                    self.metadata.label = data['label'][0].encode('utf-8')
-                    [self.metadata.genres.append(genre.encode('utf-8')) for genre in data['genre']]
-                    [self.metadata.genres.append(style.encode('utf-8')) for style in data['style']]
-                    self.metadata.country_producer = data['country']
-                    self.metadata.release_year = data['year']
-                    self.metadata.version = [format.encode('utf-8') for format in data['format']]
-                    self.metadata.publishers = [company['name'].encode('utf-8') for company in data['companies']]
-                    self.metadata.performers = [extra_artist['name'].encode('utf-8') for extra_artist in
-                                           data['extraartists']]
-                    self.metadata.work_id = data['id']  # Discogs release id
-                    # Not available:
-                    # metadata.isrc
-                    # metadata.language
-                    # metadata.composers
-                    # metadata.iswc
-                    # metadata.track_id
-                else:
-                    found_in_discogs = False
-
-            except requests.exceptions.ConnectionError:
-                print('Discogs API error. Download will continue and recover.metadata will be generated.')
-                found_in_discogs = False
-                self.generate_recover = True
-        else:
-            found_in_discogs = False
+        #
+        # if self.discogs_metadata:
+        #     try:
+        #         # Discogs query
+        #         results = self.discogs.search(artist=track.artist, track=track.title, type='release')
+        #     except (discogs_client.exceptions.HTTPError, requests.exceptions.ConnectionError, ValueError):
+        #         # Discogs error
+        #         print('Discogs API error. Download will continue and recover.metadata will be generated.')
+        #         results = None
+        #         self.generate_recover = True
+        #
+        #     try:
+        #         if results is not None and len(results) > 0:
+        #             # Get metadata from Discogs API
+        #             found_in_discogs = True
+        #             data = results[0].data
+        #             self.metadata.artist = results[0].artists[0].name.encode('utf-8')
+        #             id_in_tracklist = self.find_name(track.title, data['tracklist'])
+        #             self.metadata.title = data['tracklist'][id_in_tracklist]['title'].encode('utf-8')
+        #             self.metadata.album = data['title'].encode('utf-8')
+        #             self.metadata.album_artist = [artist['name'].encode('utf-8') for artist in data['artists']]
+        #             self.metadata.album_upc = self.find_upc([barcode.encode('utf-8') for barcode in data['barcode']])
+        #             self.metadata.label = data['label'][0].encode('utf-8')
+        #             [self.metadata.genres.append(genre.encode('utf-8')) for genre in data['genre']]
+        #             [self.metadata.genres.append(style.encode('utf-8')) for style in data['style']]
+        #             self.metadata.country_producer = data['country']
+        #             self.metadata.release_year = data['year']
+        #             self.metadata.version = [format.encode('utf-8') for format in data['format']]
+        #             self.metadata.publishers = [company['name'].encode('utf-8') for company in data['companies']]
+        #             self.metadata.performers = [extra_artist['name'].encode('utf-8') for extra_artist in
+        #                                    data['extraartists']]
+        #             self.metadata.work_id = data['id']  # Discogs release id
+        #             # Not available:
+        #             # metadata.isrc
+        #             # metadata.language
+        #             # metadata.composers
+        #             # metadata.iswc
+        #             # metadata.track_id
+        #         else:
+        #             found_in_discogs = False
+        #
+        #     except requests.exceptions.ConnectionError:
+        #         print('Discogs API error. Download will continue and recover.metadata will be generated.')
+        #         found_in_discogs = False
+        #         self.generate_recover = True
+        # else:
+        found_in_discogs = False
 
         if not found_in_discogs:
             # If it's not found in discogs then write metadata from xml

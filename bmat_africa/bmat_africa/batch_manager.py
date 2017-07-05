@@ -121,12 +121,13 @@ class BatchManager(object):
                 self.yt_downloader.download(track.youtube_url, self.tracks_path, self.current_batch_log, track_info)
 
                 # Write metadata and update only if there's no download error
-                if self.yt_downloader.file_url[:2] != 'N/A':
+                if self.yt_downloader.file_url[:3] != 'N/A':
                     self.metadata.add_track(track, self.yt_downloader.file_url)
                     self.metadata.add_to_sheet()
 
                     self.update_all_tracks(track)
                     self.current_batch_size += 1
+
             else:
                 # Track with no youtube url
                 self.global_log.warning('TRACK: ' + track_info + ' - ' +
