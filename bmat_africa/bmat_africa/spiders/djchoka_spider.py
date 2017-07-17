@@ -9,7 +9,7 @@ class DjChokaSpider(scrapy.Spider):
     name = "djchoka_spider"
     page = 1
     # Loads the actual page_limit in self.parse function
-    page_limit = 100
+    page_limit = 170
     crawl_pages = True
     last_posts = []
     track_list = []

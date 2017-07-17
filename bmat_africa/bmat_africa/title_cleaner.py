@@ -100,5 +100,5 @@ class TitleCleaner:
             track_artist, track_title = self.clean_title(post_title)
             track_artists.append(track_artist)
             track_titles.append(track_title)
-        self.track_list = zip(track_artists, track_titles, post_dates, post_links)
+        self.track_list = zip(track_artists, track_titles, post_links, post_titles, post_dates)
         self.save_titles()

@@ -8,10 +8,13 @@ import logging
 
 
 class Track(object):
-    def __init__(self, artist, title, url):
+    def __init__(self, artist, title, yt_url, yt_title, post_title, post_link):
         self.artist = artist.title()
         self.title = title.title()
-        self.youtube_url = url
+        self.youtube_url = yt_url
+        self.youtube_title = yt_title
+        self.post_title = post_title
+        self.post_link = post_link
 
 
 class BatchManager(object):
@@ -37,7 +40,7 @@ class BatchManager(object):
 
         self.tracks = []
         for dl_track in self.dl_list:
-            self.tracks.append(Track(dl_track[0], dl_track[1], dl_track[2]))
+            self.tracks.append(Track(dl_track[0], dl_track[1], dl_track[2], dl_track[3], dl_track[4], dl_track[5]))
 
         self.yt_downloader = YoutubeDownloader()
         self.metadata = ManageMetadata()
@@ -91,7 +94,9 @@ class BatchManager(object):
         open(filename, 'w').close()
 
     def update_all_tracks(self, track):
-        new_track = [track.artist, track.title, track.youtube_url]
+        new_track = [track.artist, track.title,
+                     track.youtube_url, track.youtube_title,
+                     track.post_title, track.post_link]
         self.all_tracks.reverse()
         self.all_tracks.append(new_track)
         self.all_tracks.reverse()
@@ -109,7 +114,8 @@ class BatchManager(object):
             writer = csv.writer(f, delimiter='\t')
             writer.writerows(new_posts)
         os.remove(settings.NEW_POSTS)
-        os.remove(settings.EMBED_URLS)
+        if os.path.isfile(settings.EMBED_URLS):
+            os.remove(settings.EMBED_URLS)
         os.remove(settings.DL_LIST)
 
     def make_batches(self):
