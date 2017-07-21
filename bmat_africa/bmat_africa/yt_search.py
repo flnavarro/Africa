@@ -90,7 +90,7 @@ class YoutubeSearch(object):
                         if word.lower() in search_result['snippet']['title'].lower():
                             word_count += 1
                 if word_total != 0:
-                    if float(word_count) / float(word_total) > 0.55:
+                    if float(word_count) / float(word_total) > 0.6:
                         all_words_in_result = True
                     else:
                         all_words_in_result = False
@@ -124,25 +124,34 @@ class YoutubeSearch(object):
                     continue
             # Otherwise search in youtube
             query = track[0] + ' ' + track[1]
+            yt_link = ''
+            yt_title = ''
             try:
                 yt_link, yt_title = self.youtube_search(query)
                 # If there's no result
                 if yt_link == '':
+                    new_query = ''
                     if 'FEAT.' in track[0]:
                         # If it's a FEAT. in artist, take it away
                         new_query = track[0].split('FEAT.')[0] + ' ' + track[1]
                     else:
-                        # If there's more words in artist, just use first
-                        new_query = track[0].split(' ')[0] + ' ' + track[1]
-                    try:
-                        yt_link, yt_title = self.youtube_search(new_query)
-                    except HttpError:
-                        yt_link = ''
-                        yt_title = ''
-                        print('Http Error')
+                        # If there's no title
+                        if track[1] == '':
+                            for word in track[0].strip().split():
+                                # Get capitalized words in artist as title
+                                if word.isupper():
+                                    track[1] += word + ' '
+                        # If there's a title now
+                        if track[1] != '':
+                            # If there's more words in artist, just use first and use new query
+                            track[0] = track[0].split(' ')[0]
+                            new_query = track[0] + ' ' + track[1]
+                    if new_query != '':
+                        try:
+                            yt_link, yt_title = self.youtube_search(new_query)
+                        except HttpError:
+                            print('Http Error')
             except HttpError:
-                yt_link = ''
-                yt_title = ''
                 print('HTTP error')
             self.yt_links.append(yt_link)
             self.yt_titles.append(yt_title)

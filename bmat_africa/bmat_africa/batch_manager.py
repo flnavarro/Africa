@@ -49,6 +49,7 @@ class BatchManager(object):
         self.current_batch_number = 1
         self.current_batch_size = 0
         self.current_batch_path = ''
+        self.current_batch_name = ''
         self.tracks_path = ''
         self.date = ''
         self.date_previous_batch = ''
@@ -77,8 +78,8 @@ class BatchManager(object):
                 self.current_batch_number += 1
             self.date_previous_batch = self.date
             batch_number_4d = str(self.current_batch_number).zfill(4)
-            current_batch_name = self.date + '_' + batch_number_4d
-            self.current_batch_path = self.batches_path + current_batch_name + '/'
+            self.current_batch_name = self.date + '_' + batch_number_4d
+            self.current_batch_path = self.batches_path + self.current_batch_name + '/'
             self.tracks_path = self.current_batch_path + 'tracks/'
             if not os.path.exists(self.current_batch_path):
                 os.makedirs(self.current_batch_path)
@@ -93,10 +94,14 @@ class BatchManager(object):
         filename = self.current_batch_path + 'delivery.complete'
         open(filename, 'w').close()
 
-    def update_all_tracks(self, track):
+    def update_all_tracks(self, track, write_batch_name):
+        if write_batch_name:
+            batch_name = self.current_batch_name
+        else:
+            batch_name = ''
         new_track = [track.artist, track.title,
                      track.youtube_url, track.youtube_title,
-                     track.post_title, track.post_link]
+                     track.post_title, track.post_link, batch_name]
         self.all_tracks.reverse()
         self.all_tracks.append(new_track)
         self.all_tracks.reverse()
@@ -122,22 +127,31 @@ class BatchManager(object):
         print('Obtaining batches...')
         for track in self.tracks:
             track_info = track.title + ' - ' + track.artist
-            if track.youtube_url != '':
-                print('Found Youtube URL for ' + track_info)
-                self.yt_downloader.download(track.youtube_url, self.tracks_path, self.current_batch_log, track_info)
+            if track.title != '' and track.artist != '':
+                if track.youtube_url != '':
+                    print('Found Youtube URL for ' + track_info)
+                    self.yt_downloader.download(track.youtube_url, self.tracks_path, self.current_batch_log, track_info)
 
-                # Write metadata and update only if there's no download error
-                if self.yt_downloader.file_url[:3] != 'N/A':
-                    self.metadata.add_track(track, self.yt_downloader.file_url)
-                    self.metadata.add_to_sheet()
+                    # Write metadata and update only if there's no download error
+                    if self.yt_downloader.file_url[:3] != 'N/A':
+                        self.metadata.add_track(track, self.yt_downloader.file_url)
+                        self.metadata.add_to_sheet()
 
-                    self.update_all_tracks(track)
-                    self.current_batch_size += 1
+                        self.update_all_tracks(track, True)
 
+                        self.current_batch_size += 1
+                    else:
+                        self.update_all_tracks(track, False)
+                else:
+                    # Track with no youtube url
+                    self.global_log.warning('TRACK: ' + track_info + ' - ' +
+                                            'ERROR: Missing Youtube URL.')
+                    self.update_all_tracks(track, False)
             else:
-                # Track with no youtube url
+                # Track with no artist name or title
                 self.global_log.warning('TRACK: ' + track_info + ' - ' +
-                                        'ERROR: Missing Youtube URL.')
+                                        'ERROR: Missing Artist Name or Title.')
+                self.update_all_tracks(track, False)
 
             if self.current_batch_size == self.n_tracks_per_batch \
                     or self.tracks.index(track) == len(self.tracks)-1:

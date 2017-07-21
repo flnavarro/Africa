@@ -84,8 +84,8 @@ if args_input:
     batches_path = input_parser.batches_path
 else:
     batch_size = 10
-    # batches_path = 'batches/'
-    batches_path = '/Volumes/HD2/Batches_AFR_3/'
+    batches_path = 'batches/'
+    # batches_path = '/Volumes/HD2/Batches_AFR_3/'
 
 choka_crawler = ChokaCrawler(batch_size, batches_path)
 choka_crawler.get_batches()
